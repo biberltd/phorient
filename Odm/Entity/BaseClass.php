@@ -243,6 +243,7 @@ class BaseClass
     {
         $prefix = substr($name, 0, 3);
         $property = strtolower($name[3]) . substr($name, 4);
+        $columnType = $this->getColumnType($property);
 
         if(!property_exists(get_class($this), $property)) {
             $property = strtolower(preg_replace('/([^A-Z])([A-Z])/', "$1_$2", $property));
@@ -250,37 +251,48 @@ class BaseClass
 
         switch($prefix) {
             case 'get':
-                $colType = $this->typePath . $this->getColumnType($property);
+                $colType = $this->typePath . $columnType;
                 $onerow = false;
 
-                switch($this->getColumnType($property)) {
-                    case 'OLink':
-                        $onerow = true;
-                    case 'OLinkList':
-                    case 'OLinkSet':
-                    case 'OLinkMap':
-                        if($this->ifHasLinkedClass($property)) {
-                            return $this->$property instanceof BaseType ? $this->$property->getValue() : $this->$property;
-                        } else {
-                            return $this->$property instanceof BaseType ? $this->$property->getValue() : null;
-                        }
+                /* switch($this->getColumnType($property)) {
+                     case 'OLink':
+                         $onerow = true;
+                     case 'OLinkList':
+                     case 'OLinkSet':
+                     case 'OLinkMap':
+                         if($this->ifHasLinkedClass($property)) {
+                             return $this->$property instanceof BaseType ? $this->$property->getValue() : $this->$property;
+                         } else {
+                             return $this->$property instanceof BaseType ? $this->$property->getValue() : null;
+                         }
 
-                        break;
-                    default:
-                        return $this->ifHasLinkedClass($property) ? ($this->$property) : (is_object($this->$property) ? $this->$property->getValue() : null);
-                }
-
+                         break;
+                     default:
+                         return $this->ifHasLinkedClass($property) ? ($this->$property) : ($this->$property instanceof BaseType ? $this->$property->getValue() : null);
+                 }*/
+                return $this->$property->getValue();
                 break;
 
             case 'set':
-
                 if(count($arguments) != 1) {
                     throw new \Exception("Setter for $name requires exactly one parameter.");
                 }
 
-                $colType = $this->typePath . $this->getColumnType($property);
+                $colType = $this->typePath . $columnType;
                 $onerow = false;
 
+                if ($columnType === 'OLink') {
+                    if (is_null($arguments[0]) || empty($arguments[0]) || is_array($arguments[0])) {
+                        $this->$property = $arguments[0];
+                    }else{
+                        $this->$property = new $colType($arguments[0]);
+                    }
+                }else{
+                    $this->$property = new $colType($arguments[0]);
+                }
+
+
+                /*
                 switch($this->getColumnType($property)) {
                     case 'OLink':
                         $onerow = true;
@@ -288,6 +300,7 @@ class BaseClass
                     case 'OLinkSet':
                     case 'OLinkMap':
                         if($this->ifHasLinkedClass($property)) {
+
                             $linkedObj = $this->getNameSpace() . $this->getColumnOptions($property) ['class'];
                             $repoClass = $this->createRepository($this->getColumnOptions($property) ['class']);
                             $data = $onerow ? [ $arguments[0] ] : (is_null($arguments[0]) ? [] : $arguments[0]);
@@ -299,10 +312,12 @@ class BaseClass
                                         $response = $repoClass->selectByRid($item);
                                         if($response->result instanceof BaseClass) {
                                             $obj[] = $response->result;
+                                            $this->addField($property);
                                         }
 
                                         if($response->result instanceof ORecord) {
                                             $obj[] = new $linkedObj($this->cm, $response->result);
+                                            $this->addField($property);
                                         }
                                     } else {
                                         $obj[] = $item;
@@ -379,9 +394,9 @@ class BaseClass
                         $this->$property = new $colType($arguments[0]);
                         break;
                 }
-
+*/
                 // Always return the value (Even on the set)
-                return $this->setVersionHistory();
+                //return
                 break;
 
             default:
