@@ -112,6 +112,7 @@ class ClassManager
     public function convertRecordToOdmObject(Record $record,$bundle)
     {
         $class = $this->getEntityPath($bundle).$record->getOClass();
+        if (!class_exists($class)) return $record->getOData();
         $entityClass =  new $class;
         $metadata = $this->getMetadata($entityClass);
         $recordData = $record->getOData();
