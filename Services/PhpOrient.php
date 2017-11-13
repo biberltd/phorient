@@ -294,7 +294,9 @@ class PhpOrient
      * @param string $fetchPlan
      * @return mixed
      */
-	public function query($query, $limit = 20, $fetchPlan = '*:0'){
+	public function query($query, $limit = null, $fetchPlan = '*:0'){
+	    // @todo: daha uygun bir çözüm bulunca değiştirilecek
+	    $limit = $limit ?? 10000;
 		return $this->driver->query($query, $limit, $fetchPlan);
 	}
 
@@ -304,6 +306,8 @@ class PhpOrient
      * @return mixed
      */
 	public function queryAsync($query, array $params = []){
+	    // @todo: burayı incele
+        $params['limit'] = array_key_exists('limit',$params) ? ($params['limit'] ?? 10000) : 10000;
 		return $this->driver->queryAsync($query, $params);
 	}
 
