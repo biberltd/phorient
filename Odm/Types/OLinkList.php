@@ -28,9 +28,9 @@ class OLinkList extends OrientCollection
      *
      * @throws \BiberLtd\Bundle\Phorient\Odm\Exceptions\InvalidValueException
      */
-    public function __construct(array $value = [])
+    public function __construct(array $value = [], $embedded = false)
     {
-        parent::__construct('OLinkList', $value);
+        parent::__construct('OLinkList', $value, $embedded);
     }
 
     /**
@@ -38,6 +38,18 @@ class OLinkList extends OrientCollection
      */
     public function getValue($embedded = false)
     {
+        if(!$embedded) {
+            $result = [];
+            if (is_array($this->value) && count($this->value) > 0) {
+                foreach ($this->value as $value) {
+                    if($value instanceof ID) {
+                        $result[] = $value;
+                    }
+                }
+            }
+            return $result;
+        }
+
         return $this->value;
     }
 

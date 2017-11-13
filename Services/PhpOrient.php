@@ -18,12 +18,6 @@ class PhpOrient
 	 * @var array
 	 */
 	protected $orientParams;
-	
-	/**
-	 * @todo remove once limitless selection is enabled.
-	 * @var int
-	 */
-	protected $infiniteCount = 10000;
 
     /**
      * PhpOrient constructor.
@@ -301,7 +295,8 @@ class PhpOrient
      * @return mixed
      */
 	public function query($query, $limit = null, $fetchPlan = '*:0'){
-		$limit = $limit ?? $this->infiniteCount; 
+	    // @todo: daha uygun bir çözüm bulunca değiştirilecek
+	    $limit = $limit ?? 10000;
 		return $this->driver->query($query, $limit, $fetchPlan);
 	}
 
@@ -311,7 +306,8 @@ class PhpOrient
      * @return mixed
      */
 	public function queryAsync($query, array $params = []){
-		$parmas['limit'] = $params['limit'] ?? $this->infiniteCount;
+	    // @todo: burayı incele
+        $params['limit'] = array_key_exists('limit',$params) ? ($params['limit'] ?? 10000) : 10000;
 		return $this->driver->queryAsync($query, $params);
 	}
 

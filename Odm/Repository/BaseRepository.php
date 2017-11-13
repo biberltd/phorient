@@ -22,6 +22,7 @@ use BiberLtd\Bundle\Phorient\Odm\Responses\RepositoryResponse;
 use BiberLtd\Bundle\Phorient\Odm\Types\BaseType;
 use BiberLtd\Bundle\Phorient\Odm\Types\ORecordId;
 use BiberLtd\Bundle\Phorient\Services\ClassManager;
+use BiberLtd\Bundle\Phorient\Services\Metadata;
 use BiberLtd\Bundle\Phorient\Services\PhpOrient;
 use PhpOrient\Protocols\Binary\Data\ID;
 use PhpOrient\Protocols\Binary\Data\Record;
@@ -33,12 +34,43 @@ abstract class BaseRepository implements RepositoryInterface
     protected $controller;
     private $fetchPlan = false;
     private $cm;
-
+    private $entityClass;
+    private $bundle;
+    /**
+     * @var Metadata $metadata;
+     */
+    private $metadata;
 
     public function __construct(ClassManager $cm)
     {
         $this->cm = $cm;
         $this->oService = $cm->getConnection($cm->currentDb);
+    }
+
+    public function setEntityClass(BaseClass $entity)
+    {
+        $this->entityClass = $entity;
+    }
+
+    public function setMetadata(Metadata $metadata)
+    {
+        $this->metadata = $metadata;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBundle()
+    {
+        return $this->bundle;
+    }
+
+    /**
+     * @param mixed $bundle
+     */
+    public function setBundle($bundle)
+    {
+        $this->bundle = $bundle;
     }
 
     /**
@@ -109,21 +141,25 @@ abstract class BaseRepository implements RepositoryInterface
     public function query($query, $limit = null, $fetchPlan = '*:0')
     {
 
-        $resultSet = $this->oService->query($query, $limit, $fetchPlan);
-
-        return new RepositoryResponse($resultSet);
+        //$resultSet = $this->oService->query($query, $limit, $fetchPlan);
+        $resultSet = $this->queryAsync($query, $limit, '*:0');
+        return $resultSet;
     }
 
-    public function queryAsync($query, $fetchPlan = '*:0')
+    public function queryAsync($query, $limit =null, $fetchPlan = '*:0', $limitless = false)
     {
-
         $return = new Record();
         $myFunction = function(Record $record) use ($return) {
             $return = $record;
         };
-        $resultSet = $this->oService->queryAsync($query, [ 'fetch_plan' => $fetchPlan, '_callback' => $myFunction ]);
 
-        return new RepositoryResponse($return);
+        $options = ['fetch_plan' => $fetchPlan, '_callback' => $myFunction ];
+        $options = $limitless ? $options : array_merge($options, ['limit'=>$limit]);
+
+        $resultSet = $this->oService->queryAsync($query, $options);
+        foreach($resultSet as &$row) $row = $this->cm->convertRecordToOdmObject($row,$this->getBundle());
+
+        return new RepositoryResponse($resultSet);
     }
 
     public function setFetchPlan($fetchString = '*:0')
@@ -354,13 +390,15 @@ abstract class BaseRepository implements RepositoryInterface
     private function prepareUpdateQuery($entity)
     {
         $props = $entity->getProps();
+        $updatedProps = $entity->getUpdatedProps();
+        $entity->setVersionHistory();
         $query = 'UPDATE ' . $this->class . ' SET ';
         $propStr = '';
         foreach($props as $aProperty) {
             $propName = $aProperty->getName();
             $get = 'get' . ucfirst($propName);
             $value = $entity->$get();
-            if($propName == 'rid') {
+            if($propName == 'rid' || !in_array($propName, $updatedProps)) {
                 continue;
             }
             $colDef = $entity->getColumnDefinition($propName);

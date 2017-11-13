@@ -15,6 +15,8 @@
 namespace BiberLtd\Bundle\Phorient\Odm\Responses;
 
 
+use BiberLtd\Bundle\Phorient\Services\ClassDataManipulator;
+
 class RepositoryResponse{
 	/**
 	 * @var int
@@ -52,10 +54,31 @@ class RepositoryResponse{
 		return $this;
 	}
 
+    public function getCount()
+    {
+        return is_array($this->result) ? count($this->result) : 0;
+    }
+
+    public function getSingularResult()
+    {
+        return $this->getCount() >0 ? $this->result[0] : null;
+    }
+
+    public function getResult()
+    {
+        return $this->result;
+    }
 	/**
 	 * @param $result
 	 */
 	public function setResult($result){
 		$this->result = $result;
 	}
+
+	public function toJson()
+    {
+        $this->result = (new ClassDataManipulator())->output($this->result,'array');
+        return $this;
+    }
+
 }

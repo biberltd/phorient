@@ -46,6 +46,11 @@ class ClassRepositoryFactory
         }
         $entityClass = $classManager->getEntityPath($bundle).$entityName;
 
+        /**
+         * @var Metadata $metadata
+         */
+        $metadata = $classManager->getMetadata($entityClass);
+
         $rc = new \ReflectionClass($entityClass);
         /**
          * @var AnnotationReader $an
@@ -62,6 +67,9 @@ class ClassRepositoryFactory
             $repositoryClassName = str_replace('Entity','Repository',$this->getNameSpace()).$entityName.'Repository';
         }
 
-        return new $repositoryClassName($classManager);
+        $repository =  new $repositoryClassName($classManager);
+        $repository->setMetadata($metadata);
+        $repository->setBundle($bundle);
+        return $repository;
     }
 }
