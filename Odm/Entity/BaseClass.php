@@ -48,18 +48,21 @@ class BaseClass
     /**
      * @var \DateTime
      * @JMS\Exclude()
+     * @JMS\Type("DateTime<'d.m.Y H:i:s'>")
      */
     protected $dateAdded;
 
     /**
      * @var \DateTime
      * @JMS\Exclude(if="object.isNotRecordObject()")
+     * @JMS\Type("DateTime<'d.m.Y H:i:s'>")
      */
     protected $dateUpdated;
 
     /**
      * @var \DateTime|null
      * @JMS\Exclude()
+     * @JMS\Type("DateTime<'d.m.Y H:i:s'>")
      */
     protected $dateRemoved = null;
 
@@ -86,7 +89,7 @@ class BaseClass
     /**
      * @JMS\Exclude()
      */
-    protected $dtFormat;
+    public $dtFormat;
     /**
      * @var string
      * @JMS\Exclude()
@@ -99,7 +102,7 @@ class BaseClass
      */
     public function __construct($timezone = 'Europe/Istanbul')
     {
-
+        $this->dtFormat = 'Y.m.d H:i:s';
     }
 
     public function isNotRecordObject()
