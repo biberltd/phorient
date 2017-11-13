@@ -146,13 +146,13 @@ abstract class BaseRepository implements RepositoryInterface
         return $resultSet;
     }
 
-    public function queryAsync($query, $limit =null, $fetchPlan = '*:0', $limitless = false)
+    public function queryAsync($query, $limit = null, $fetchPlan = '*:0', $limitless = false)
     {
         $return = new Record();
         $myFunction = function(Record $record) use ($return) {
             $return = $record;
         };
-
+        $limit = $limit ?? -1;
         $options = ['fetch_plan' => $fetchPlan, '_callback' => $myFunction ];
         $options = $limitless ? $options : array_merge($options, ['limit'=>$limit]);
 
