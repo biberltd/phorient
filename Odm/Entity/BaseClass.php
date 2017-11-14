@@ -22,6 +22,7 @@ use BiberLtd\Bundle\Phorient\Odm\Types\ORecordId;
 use BiberLtd\Bundle\Phorient\Services\ClassManager;
 use BiberLtd\Bundle\Phorient\Services\Metadata;
 use Doctrine\Common\Annotations\AnnotationException;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping AS ORM;
 use Doctrine\ORM\Mapping\Column;
 use PhpOrient\Protocols\Binary\Data\ID as ID;
@@ -48,21 +49,18 @@ class BaseClass
     /**
      * @var \DateTime
      * @JMS\Exclude()
-     * @JMS\Type("DateTime<'d.m.Y H:i:s'>")
      */
     protected $dateAdded;
 
     /**
      * @var \DateTime
      * @JMS\Exclude(if="object.isNotRecordObject()")
-     * @JMS\Type("DateTime<'d.m.Y H:i:s'>")
      */
     protected $dateUpdated;
 
     /**
      * @var \DateTime|null
      * @JMS\Exclude()
-     * @JMS\Type("DateTime<'d.m.Y H:i:s'>")
      */
     protected $dateRemoved = null;
 
@@ -87,9 +85,15 @@ class BaseClass
     private $updatedProps = [];
 
     /**
+     * @var ArrayCollection
+     * @JMS\Exclude(if="object.parameterBag==null")
+     */
+    public $parameterBag;
+
+    /**
      * @JMS\Exclude()
      */
-    public $dtFormat;
+    protected $dtFormat;
     /**
      * @var string
      * @JMS\Exclude()
@@ -102,12 +106,12 @@ class BaseClass
      */
     public function __construct($timezone = 'Europe/Istanbul')
     {
-        $this->dtFormat = 'Y.m.d H:i:s';
+        $this->parameterBag = new ArrayCollection();
     }
 
     public function isNotRecordObject()
     {
-        return $this->rid->getValue()->cluster == -1 && $this->rid->getValue()->position == -1 ? true : false;
+        return ($this->rid->getValue()->cluster == -1 && $this->rid->getValue()->position == -1) ||  $this->rid->getValue() == null ? true : false;
     }
     public function getStringId()
     {
