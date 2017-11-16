@@ -89,13 +89,12 @@ class RepositoryResponse{
         $this->result = (new ClassDataManipulator())->output($this->result,'array');
         return $this;
     }
+    public function setTotalRecords($count){
+        $this->totalRecords = $count;
+        return $this;
+    }
 
-    /**
-     * @param $count
-     * @return $this
-     */
-    public function setTotalRecourds($count){
-	    $this->totalRecords = $count;
-	    return $this;
+    public function getTotalRecords(){
+        return $this->totalRecords;
     }
 }
