@@ -31,6 +31,11 @@ class RepositoryResponse{
 	 * @var mixed
 	 */
 	public $execution;
+
+	/**
+	 * @var mixed
+	 */
+	public $totalRecords;
 	/**
 	 * RepositoryResponse constructor.
 	 *
@@ -40,6 +45,7 @@ class RepositoryResponse{
 	public function __construct($result = null, $code = 200){
 		$this->code = $code;
 		$this->result = $result;
+		$this->totalRecords = 0;
 		$this->execution = new \stdClass();
 		$this->execution->start = microtime(true);
 		$this->endExecution();
@@ -68,11 +74,14 @@ class RepositoryResponse{
     {
         return $this->result;
     }
-	/**
-	 * @param $result
-	 */
+
+    /**
+     * @param $result
+     * @return $this
+     */
 	public function setResult($result){
 		$this->result = $result;
+		return $this;
 	}
 
 	public function toJson()
@@ -81,4 +90,12 @@ class RepositoryResponse{
         return $this;
     }
 
+    /**
+     * @param $count
+     * @return $this
+     */
+    public function setTotalRecourds($count){
+	    $this->totalRecords = $count;
+	    return $this;
+    }
 }
