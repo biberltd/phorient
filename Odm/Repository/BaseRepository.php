@@ -142,7 +142,7 @@ abstract class BaseRepository implements RepositoryInterface
     {
 
         //$resultSet = $this->oService->query($query, $limit, $fetchPlan);
-        $resultSet = $this->queryAsync($query, $limit, '*:0');
+        $resultSet = $this->queryAsync($query, $limit, $fetchPlan);
         return $resultSet;
     }
 
