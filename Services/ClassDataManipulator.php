@@ -9,6 +9,7 @@
 namespace BiberLtd\Bundle\Phorient\Services;
 use BiberLtd\Bundle\Phorient\Odm\Entity\BaseClass;
 use BiberLtd\Bundle\Phorient\Odm\Types\BaseType;
+use BiberLtd\Bundle\Phorient\Odm\Types\ORecordId;
 
 class ClassDataManipulator
 {
@@ -81,7 +82,7 @@ class ClassDataManipulator
         if(!is_array($array)) return $array;
         array_walk_recursive($array, function (&$value, $index) use($object) {
             $value = $value instanceof BaseType ? (method_exists($object,'get'.ucfirst($index)) ? $object->{'get'.ucfirst($index)}() : $value->getValue()) : $value;
-            $value = $value instanceof ID ? '#'.$value->cluster.':'.$value->position : $value;
+            $value = (is_object($value) && property_exists($value,'cluster') && property_exists($value,'position')) ? '#'.implode(':',(array)$value) : $value;
             if ($value instanceof BaseClass) {
                 $value = $this->toArray($value);
             }else{
