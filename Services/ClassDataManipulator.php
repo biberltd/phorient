@@ -74,8 +74,9 @@ class ClassDataManipulator
         return $array;
     }
 
-    public function toArray($object)
+    public function toArray($object,$ignored=array())
     {
+        $this->ignored=array_merge($ignored,$this->ignored);
         $array = $object instanceof BaseClass ? $this->getToMapProperties($object) : (is_object($object) ? get_object_vars($object) : $object);
         if(!is_array($array)) return $array;
         array_walk_recursive($array, function (&$value, $index) use($object) {
