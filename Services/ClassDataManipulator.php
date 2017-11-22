@@ -9,7 +9,6 @@
 namespace BiberLtd\Bundle\Phorient\Services;
 use BiberLtd\Bundle\Phorient\Odm\Entity\BaseClass;
 use BiberLtd\Bundle\Phorient\Odm\Types\BaseType;
-use BiberLtd\Bundle\Phorient\Odm\Types\ORecordId;
 
 class ClassDataManipulator
 {

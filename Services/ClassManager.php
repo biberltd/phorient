@@ -11,10 +11,8 @@ namespace BiberLtd\Bundle\Phorient\Services;
 
 use BiberLtd\Bundle\Phorient\Odm\Entity\BaseClass;
 use BiberLtd\Bundle\Phorient\Odm\Repository\BaseRepository;
-use BiberLtd\Bundle\Phorient\Odm\Types\BaseType;
 use Doctrine\Common\Annotations\AnnotationReader;
 use PhpOrient\PhpOrient;
-use PhpOrient\Protocols\Binary\Data\ID;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use PhpOrient\Protocols\Binary\Data\Record;
 use BiberLtd\Bundle\Phorient\Odm\Types\ORecordId;
@@ -129,7 +127,6 @@ class ClassManager
                     $entityClass->parameterBag->set($propName,null);
             }
         }
-        if($record->getRid() instanceof ID)
         $entityClass->setRid($record->getRid());
         return $entityClass;
     }

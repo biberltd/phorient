@@ -19,10 +19,10 @@ use AppBundle\Entity\SaasAcademic\AcademicUnit;
 use BiberLtd\Bundle\Phorient\Odm\Exceptions\InvalidRecordIdString;
 use BiberLtd\Bundle\Phorient\Odm\Types\BaseType;
 use BiberLtd\Bundle\Phorient\Odm\Types\ORecordId;
+use BiberLtd\Bundle\Phorient\Services\ClassDataManipulator;
 use BiberLtd\Bundle\Phorient\Services\ClassManager;
 use BiberLtd\Bundle\Phorient\Services\Metadata;
 use Doctrine\Common\Annotations\AnnotationException;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping AS ORM;
 use Doctrine\ORM\Mapping\Column;
 use PhpOrient\Protocols\Binary\Data\ID as ID;
@@ -47,24 +47,6 @@ class BaseClass
     protected $modified = false;
 
     /**
-     * @var \DateTime
-     * @JMS\Exclude()
-     */
-    protected $dateAdded;
-
-    /**
-     * @var \DateTime
-     * @JMS\Exclude(if="object.isNotRecordObject()")
-     */
-    protected $dateUpdated;
-
-    /**
-     * @var \DateTime|null
-     * @JMS\Exclude()
-     */
-    protected $dateRemoved = null;
-
-    /**
      * @var string $version md5 Hash of object serialization
      * @JMS\Exclude()
      */
@@ -76,7 +58,6 @@ class BaseClass
      * @ORM\Column(type="OEmbeddedMap")
      */
     private $versionHistory = [];
-
 
     /**
      * @var array Holds definition of all public properties of a class for serialization purposes.
@@ -93,7 +74,7 @@ class BaseClass
     /**
      * @JMS\Exclude()
      */
-    protected $dtFormat;
+    public $dtFormat;
     /**
      * @var string
      * @JMS\Exclude()
@@ -111,7 +92,7 @@ class BaseClass
 
     public function isNotRecordObject()
     {
-        return ($this->rid->getValue()->cluster == -1 && $this->rid->getValue()->position == -1) ||  $this->rid->getValue() == null ? true : false;
+        return $this->rid->getValue()->cluster == -1 && $this->rid->getValue()->position == -1 ? true : false;
     }
     public function getStringId()
     {
@@ -139,8 +120,9 @@ class BaseClass
      */
     final public function setVersionHistory()
     {
+        $dm = new ClassDataManipulator();
         if($this->versionHash !== $this->getUpdatedVersionHash() && !$this->modified) {
-            $this->versionHistory[] = $this->cm->getDataManipulator()->output($this,'json');
+            $this->versionHistory[] = $dm->output($this,'json');
             $this->modified = true;
         } else {
             $this->modified = false;
@@ -154,7 +136,8 @@ class BaseClass
      */
     final protected function getUpdatedVersionHash()
     {
-        return md5($this->cm->getDataManipulator()->output($this,'json'));
+        $dm = new ClassDataManipulator();
+        return md5($dm->output($this,'json'));
     }
 
     /**
@@ -207,5 +190,22 @@ class BaseClass
 
         return $this;
     }
+
+    /**
+     * @return array
+     */
+    public function getUpdatedProps()
+    {
+        return $this->updatedProps;
+    }
+
+    /**
+     * @param array $updatedProps
+     */
+    public function setUpdatedProps($updatedProps)
+    {
+        $this->updatedProps = $updatedProps;
+    }
+
 
 }

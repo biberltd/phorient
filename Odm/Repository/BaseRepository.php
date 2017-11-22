@@ -146,6 +146,12 @@ abstract class BaseRepository implements RepositoryInterface
         return $resultSet;
     }
 
+    public function command($query)
+    {
+
+        $result = $this->oService->command($query);
+        return $result;
+    }
     public function queryAsync($query, $limit = null, $fetchPlan = '*:0', $limitless = false)
     {
         $return = new Record();
@@ -389,7 +395,10 @@ abstract class BaseRepository implements RepositoryInterface
      */
     private function prepareUpdateQuery($entity)
     {
-        $props = $entity->getProps();
+
+        $metadata = $this->cm->getMetadata($entity);
+
+        $props = $metadata->getProps();
         $updatedProps = $entity->getUpdatedProps();
         $entity->setVersionHistory();
         $query = 'UPDATE ' . $this->class . ' SET ';
@@ -397,28 +406,39 @@ abstract class BaseRepository implements RepositoryInterface
         foreach($props as $aProperty) {
             $propName = $aProperty->getName();
             $get = 'get' . ucfirst($propName);
-            $value = $entity->$get();
-            if($propName == 'rid' || !in_array($propName, $updatedProps)) {
+            if(method_exists($entity,'get' . ucfirst($propName))) {
+                $value = $entity->$get();
+            }else{
+                $value = $entity->$propName;
+
+            }
+
+            if($propName == 'rid') {
                 continue;
             }
-            $colDef = $entity->getColumnDefinition($propName);
-            if(is_null($value) || empty($value) || (key_exists('readOnly', $colDef->options) && $colDef->options['readOnly'] == true)) {
+            /*if($propName == 'rid' || !in_array($propName, $updatedProps)) {
+                continue;
+            }*/
+            $colDef = $metadata->getColumn($propName);
+            if(is_null($value) || empty($value) || (property_exists($colDef,'options') && key_exists('readOnly', $colDef->options) && $colDef->options['readOnly'] == true)) {
                 continue;
             }
             $propStr .= $propName . ' = ';
             $valuesStr = '';
-            switch(strtolower($colDef->type)) {
+
+            $colType = property_exists($colDef,'type') ? $colDef->type : null;
+            switch(strtolower($colType)) {
                 case 'obinary':
                     /**
                      * @todo to be implemented
                      */
                     break;
                 case 'oboolean':
-                    $valuesStr .= $entity->$get();
+                    $valuesStr .= $value;
                     break;
                 case 'odate':
                 case 'odatetime':
-                    $dateStr = $entity->$get()->format('Y-m-d H:i:s');
+                    $dateStr = $value->format('Y-m-d H:i:s');
                     $valuesStr .= '"' . $dateStr . '"';
                     break;
                 case 'odecimal':
@@ -426,20 +446,20 @@ abstract class BaseRepository implements RepositoryInterface
                 case 'ointeger':
                 case 'oshort':
                 case 'olong':
-                    $valuesStr .= $entity->$get();
+                    $valuesStr .= $value;
                     break;
                 case 'oembedded':
                 case 'oembeddedlist':
                 case 'oembeddedmap':
                 case 'oembeddedset':
-                    $valuesStr .= json_encode($entity->$get());
+                    $valuesStr .= json_encode($value);
 
                     break;
                 case 'olink':
-                    if($entity->$get() instanceof BaseClass)
-                        $valuesStr .= '"' . $entity->$get()->getRid('string') . '"';
-                    elseif($entity->$get() instanceof ID) {
-                        $id = $entity->$get();
+                    if($value instanceof BaseClass)
+                        $valuesStr .= '"' . $value->getRid('string') . '"';
+                    elseif($value instanceof ID) {
+                        $id = $value;
                         $rid = '#' . $id->cluster . ':' . $id->position;
                         $valuesStr .= '"' . $rid . '"';
                     }else{
@@ -451,9 +471,9 @@ abstract class BaseRepository implements RepositoryInterface
                 case 'olinkset':
                 case 'olinklist':
                     $linklist = [];
-                    if(is_object($entity->$get()) && method_exists($entity->$get(),'getValue') && $entity->$get()->getValue() != null)
+                    if(is_object($value) && method_exists($value,'getValue') && $value->getValue() != null)
                     {
-                        foreach($entity->$get()->getValue() as $index => $item)
+                        foreach($value->getValue() as $index => $item)
                         {
                             $linklist[$index] = $item->getRid('string');
                         }
@@ -463,10 +483,10 @@ abstract class BaseRepository implements RepositoryInterface
                     }
                     break;
                 case 'orecordid':
-                    $valuesStr .= '"' . $entity->$get() . '"';
+                    $valuesStr .= '"' . $value . '"';
                     break;
                 case 'ostring':
-                    $valuesStr .= '"' . $entity->$get() . '"';
+                    $valuesStr .= '"' . $value . '"';
                     break;
             }
             $propStr .= $valuesStr . ', ';
