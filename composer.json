@@ -13,6 +13,7 @@
     ],
     "require": {
         "biberltd/phporient": "dev-biberltd",
+        "guzzlehttp/guzzle": "~6.0",
         "symfony/process": "^3.0",
         "symfony/filesystem": "^3.0"
     },

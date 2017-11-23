@@ -1,18 +1,10 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: erman.titiz
- * Date: 12.06.2017
- * Time: 14:22
- */
-
 namespace BiberLtd\Bundle\Phorient\Services;
-
-
 use BiberLtd\Bundle\Phorient\Odm\Entity\BaseClass;
 use BiberLtd\Bundle\Phorient\Odm\Repository\BaseRepository;
 use Doctrine\Common\Annotations\AnnotationReader;
 use PhpOrient\PhpOrient;
+use Sgpatil\Orientphp\Client;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use PhpOrient\Protocols\Binary\Data\Record;
 use BiberLtd\Bundle\Phorient\Odm\Types\ORecordId;
@@ -62,17 +54,28 @@ class ClassManager
         $this->config[$dbName]->setDbUser($dbInfo['database'][$dbName]['username']);
         $this->config[$dbName]->setDbPass($dbInfo['database'][$dbName]['password']);
 
-        $this->oService[$dbName] = new PhpOrient($this->config[$dbName]->getHost(), $this->config[$dbName]->getPort(), $this->config[$dbName]->getToken());
-        $this->oService[$dbName]->connect($this->config[$dbName]->getDbUser(), $this->config[$dbName]->getDbPass());
-        $this->oService[$dbName]->dbOpen($dbName, $this->config[$dbName]->getDbUser(), $this->config[$dbName]->getDbPass());
+        $client = new Client($this->config[$dbName]->getHost(), $this->config[$dbName]->getPort(),$this->config[$dbName]->getHost(), $dbName);
+        $client->getTransport()->setAuth($this->config[$dbName]->getDbUser(), $this->config[$dbName]->getPassword());
+
+        $this->oService[$dbName] = $client;
+        $this->oService[$dbName]->getTransport()->setAuth($this->config[$dbName]->getDbUser(), $this->config[$dbName]->getPassword());
         return $this->setConnection($dbName);
     }
 
+    /**
+     * @param $dbName
+     * @return $this
+     */
     public function setConnection($dbName)
     {
         $this->currentDb = $dbName;
         return $this;
     }
+
+    /**
+     * @param null $dbName
+     * @return mixed
+     */
     public function getConnection($dbName=null)
     {
         return $this->oService[$dbName ?? $this->currentDb];
