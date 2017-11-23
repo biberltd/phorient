@@ -1,43 +1,41 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: erman.titiz
- * Date: 15.06.2017
- * Time: 11:44
- */
 
 namespace BiberLtd\Bundle\Phorient\Services;
-
-
 class CMConfig
 {
 
     private $host;
     private $port;
     private $token;
-    private $db_user;
-    private $db_pass;
+    private $dbUser;
+    private $dbPass;
+    private $protocol;
 
     /**
      * CMConfig constructor.
-     * @param $host
-     * @param $port
-     * @param $token
-     * @param $db_user
-     * @param $db_pass
+     * @param string $host
+     * @param string $port
+     * @param string $token
+     * @param string $dbUser
+     * @param string $dbPass
+     * @param string $protocol
      */
-    public function __construct($host='localhost', $port='2424', $token='', $db_user='root', $db_pass='root')
+    public function __construct(
+        string $host = 'localhost', string $port = '2424', string $token = '',
+        string $dbUser = 'root', string $dbPass = 'root',
+        string $protocol = 'binary'
+    )
     {
-        $this->host = $host;
-        $this->port = $port;
-        $this->token = $token;
-        $this->db_user = $db_user;
-        $this->db_pass = $db_pass;
+        $this->host     = $host;
+        $this->port     = $port;
+        $this->token    = $token;
+        $this->dbUser   = $dbUser;
+        $this->dbPass   = $dbPass;
+        $this->protocol = $protocol;
     }
 
-
     /**
-     * @return mixed
+     * @return string
      */
     public function getHost()
     {
@@ -45,17 +43,17 @@ class CMConfig
     }
 
     /**
-     * @param mixed $host
+     * @param string $host
      * @return $this
      */
-    public function setHost($host)
+    public function setHost(string $host)
     {
         $this->host = $host;
         return $this;
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getPort()
     {
@@ -63,17 +61,17 @@ class CMConfig
     }
 
     /**
-     * @param mixed $port
+     * @param int $port
      * @return $this
      */
-    public function setPort($port)
+    public function setPort(int $port)
     {
         $this->port = $port;
         return $this;
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getToken()
     {
@@ -81,30 +79,30 @@ class CMConfig
     }
 
     /**
-     * @param mixed $token
+     * @param string $token
      * @return $this
      */
-    public function setToken($token)
+    public function setToken(string $token)
     {
         $this->token = $token;
         return $this;
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getDbUser()
     {
-        return $this->db_user;
+        return $this->dbUser;
     }
 
     /**
-     * @param mixed $db_user
+     * @param string $dbUser
      * @return $this
      */
-    public function setDbUser($db_user)
+    public function setDbUser(string $dbUser)
     {
-        $this->db_user = $db_user;
+        $this->dbPass = $dbUser;
         return $this;
     }
 
@@ -113,18 +111,30 @@ class CMConfig
      */
     public function getDbPass()
     {
-        return $this->db_pass;
+        return $this->dbPass;
     }
 
     /**
-     * @param mixed $db_pass
+     * @param string $dbPass
      * @return $this
      */
-    public function setDbPass($db_pass)
+    public function setDbPass(string $dbPass)
     {
-        $this->db_pass = $db_pass;
+        $this->dbPass = $dbPass;
         return $this;
     }
 
+    /**
+     * @return string
+     */
+    public function getProtocol(){
+        return $this->protocol;
+    }
 
+    /**
+     * @param string $protocol
+     */
+    public function setProtocol(string $protocol){
+        $this->protocol = $protocol;
+    }
 }
