@@ -204,6 +204,16 @@ class ClassDataManipulator
             $record = $this->objectToRecord($record);
             //dump($record);
         }
+        elseif(is_array($record) && array_key_exists('@type',$record))
+        {
+            $copyRecord = [];
+            foreach($record as $key => $value){
+                if($key[0] != '@'){
+                    $copyRecord[$key] = $value;
+                }
+            }
+            return $copyRecord;
+        }
         $oClass = $record->getOClass();
         $oData = $record->getOData();;
         $class = $this->cm->getEntityPath($bundle).$oClass;
@@ -216,11 +226,15 @@ class ClassDataManipulator
 
             if(array_key_exists($propName, $recordData)) {
                 $value = $this->checkisRecord($recordData[$propName]) ? $this->convertRecordToOdmObject($recordData[$propName],$bundle) : $this->arrayToObject($recordData[$propName],$bundle);
+                if($annotations->type=="ODateTime")
+                {
+                    $value = \DateTime::createFromFormat('Y-m-d H:i:s',$value);
+                }
                 $methodName = 'set' . ucfirst( $propName );
                 if ( method_exists( $entityClass, $methodName ) ) {
                     $entityClass->{$methodName}( $value);
                 } elseif( property_exists( $entityClass, $propName ) ) {
-                    $entityClass->{$propName} = $value;
+                    $entityClass->{$key} = $value;
                 } else {
                     // skip not existent configuration params
                 }

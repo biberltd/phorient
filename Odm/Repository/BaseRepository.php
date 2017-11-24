@@ -144,18 +144,16 @@ abstract class BaseRepository implements RepositoryInterface
      */
     public function query($query, $limit = null, $fetchPlan = '*:0')
     {
-
         //$resultSet = $this->oService->query($query, $limit, $fetchPlan);
         $resultSet = $this->queryAsync($query, $limit, $fetchPlan);
-        return $resultSet;
+        return $this->setResult($resultSet);
     }
 
     public function command($query)
     {
 
         $result = $this->oService->command($query);
-        $this->setResult($result);
-        return $this;
+        return $result;
     }
     public function queryAsync($query, $limit = null, $fetchPlan = '*:0', $limitless = false)
     {
@@ -168,8 +166,7 @@ abstract class BaseRepository implements RepositoryInterface
         $options = $limitless ? $options : array_merge($options, ['limit'=>$limit]);
 
         $resultSet = $this->oService->queryAsync($query, $options);
-        $this->setResult($resultSet);
-        return $this;
+        return $resultSet;
     }
 
     public function setFetchPlan($fetchString = '*:0')
@@ -628,14 +625,29 @@ abstract class BaseRepository implements RepositoryInterface
      * @param $result
      */
     public function setResult($result){
-        $this->response->raw = $result;
+        $response = new RepositoryResponse();
+        $response->raw = $result;
         foreach($result as &$row) $row = $this->cm->getDataManipulator()->convertRecordToOdmObject($row,$this->getBundle());
-        $this->response->setResult($result);
+        $response->setResult($result);
 
+        return $response;
     }
 
     public function toJson()
     {
         $this->response->toJson();
+    }
+
+    public function setTotalRecords($count){
+        $this->response->setTotalRecords($count);
+        return $this;
+    }
+    public function getTotalRecords(){
+        return $this->response->getTotalRecords();
+    }
+
+    public function getReponse()
+    {
+        return $this->response;
     }
 }
