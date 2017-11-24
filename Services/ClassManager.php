@@ -1,10 +1,11 @@
 <?php
+
 namespace BiberLtd\Bundle\Phorient\Services;
+
 use BiberLtd\Bundle\Phorient\Odm\Entity\BaseClass;
 use BiberLtd\Bundle\Phorient\Odm\Repository\BaseRepository;
 use Doctrine\Common\Annotations\AnnotationReader;
 use PhpOrient\PhpOrient;
-use Sgpatil\Orientphp\Client;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use PhpOrient\Protocols\Binary\Data\Record;
 use BiberLtd\Bundle\Phorient\Odm\Types\ORecordId;
@@ -22,6 +23,7 @@ class ClassManager
     public $currentDb;
     private $entityPath;
     private $dataManipulator;
+    public $isSecure = false;
 
     public function __construct(ContainerInterface $container =  null, CMConfig $config=null)
     {
@@ -53,29 +55,37 @@ class ClassManager
         $this->config[$dbName]->setToken($dbInfo['database'][$dbName]['token']);
         $this->config[$dbName]->setDbUser($dbInfo['database'][$dbName]['username']);
         $this->config[$dbName]->setDbPass($dbInfo['database'][$dbName]['password']);
+        /**
+         * Protocol can be either of the following two values:
+         * - binary
+         * - rest
+         */
+        $this->config[$dbName]->setProtocol($dbInfo['database'][$dbName]['protocol']);
+        switch($dbInfo['database'][$dbName]['protocol']){
+            case 'binary':
+                $this->oService[$dbName] = new PhpOrient($this->config[$dbName]->getHost(), $this->config[$dbName]->getPort(), $this->config[$dbName]->getToken());
+                break;
+            case 'rest':
+                $this->oService[$dbName] = new OrientRest(
+                    $this->config[$dbName]->getHost(),
+                    $this->config[$dbName]->getPort(),
+                    $dbName,
+                    ['username' => $this->config[$dbName]->getDbUser(), 'password' => $this->config[$dbName]->getDbPass()],
+                    $this->isSecure ?? false
+                );
+                break;
+        }
 
-        $client = new Client($this->config[$dbName]->getHost(), $this->config[$dbName]->getPort(),$this->config[$dbName]->getHost(), $dbName);
-        $client->getTransport()->setAuth($this->config[$dbName]->getDbUser(), $this->config[$dbName]->getPassword());
-
-        $this->oService[$dbName] = $client;
-        $this->oService[$dbName]->getTransport()->setAuth($this->config[$dbName]->getDbUser(), $this->config[$dbName]->getPassword());
+        $this->oService[$dbName]->connect($this->config[$dbName]->getDbUser(), $this->config[$dbName]->getDbPass());
+        $this->oService[$dbName]->dbOpen($dbName, $this->config[$dbName]->getDbUser(), $this->config[$dbName]->getDbPass());
         return $this->setConnection($dbName);
     }
 
-    /**
-     * @param $dbName
-     * @return $this
-     */
     public function setConnection($dbName)
     {
         $this->currentDb = $dbName;
         return $this;
     }
-
-    /**
-     * @param null $dbName
-     * @return mixed
-     */
     public function getConnection($dbName=null)
     {
         return $this->oService[$dbName ?? $this->currentDb];
@@ -112,7 +122,7 @@ class ClassManager
         return $this->cMetadataFactory->getMetadata($this,$entityClass);
 
     }
-    public function convertRecordToOdmObject(Record $record,$bundle)
+    public function convertRecordToOdmObject(Record $record, $bundle)
     {
         $class = $this->getEntityPath($bundle).$record->getOClass();
         if (!class_exists($class)) return $record->getOData();
