@@ -220,7 +220,7 @@ class ClassDataManipulator
                 if ( method_exists( $entityClass, $methodName ) ) {
                     $entityClass->{$methodName}( $value);
                 } elseif( property_exists( $entityClass, $propName ) ) {
-                    $entityClass->{$key} = $value;
+                    $entityClass->{$propName} = $value;
                 } else {
                     // skip not existent configuration params
                 }
