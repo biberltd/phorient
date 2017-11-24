@@ -25,7 +25,7 @@ class ClassMetadataFactory
      */
     public function getMetadata(ClassManager $classManager, $entityClass)
     {
-        $metaHash = md5($entityClass) . spl_object_hash($classManager);
+        $metaHash = md5(is_string($entityClass) ? $entityClass : get_class($entityClass)) . spl_object_hash($classManager);
 
         if (isset($this->metadataList[$metaHash])) {
             return $this->metadataList[$metaHash];
@@ -55,7 +55,10 @@ class ClassMetadataFactory
     final private function prepareProps($class, Metadata $metadata)
     {
         $reflectionClass = new \ReflectionClass($class);
-        $metadata->setProps($reflectionClass->getProperties(\ReflectionProperty::IS_PUBLIC));
+        $arr1 = $reflectionClass->getProperties(\ReflectionProperty::IS_PRIVATE);
+        $arr2 = $reflectionClass->getProperties(\ReflectionProperty::IS_PUBLIC);
+        $arr3 = $reflectionClass->getProperties(\ReflectionProperty::IS_PROTECTED);
+        $metadata->setProps(array_merge($arr1,$arr2,$arr3));
 
         return $metadata;
     }

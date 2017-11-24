@@ -12,6 +12,7 @@ namespace BiberLtd\Bundle\Phorient\Services;
 use BiberLtd\Bundle\Phorient\Odm\Entity\BaseClass;
 use BiberLtd\Bundle\Phorient\Odm\Repository\BaseRepository;
 use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\ORM\Mapping\Id;
 use PhpOrient\PhpOrient;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use PhpOrient\Protocols\Binary\Data\Record;
@@ -38,7 +39,7 @@ class ClassManager
         $this->cRepositoryFactory = new ClassRepositoryFactory();
         $this->cMetadataFactory = new ClassMetadataFactory();
         $this->annotationReader = new AnnotationReader();
-        $this->dataManipulator = new ClassDataManipulator();
+        $this->dataManipulator = new ClassDataManipulator($this);
 
     }
 
@@ -61,8 +62,26 @@ class ClassManager
         $this->config[$dbName]->setToken($dbInfo['database'][$dbName]['token']);
         $this->config[$dbName]->setDbUser($dbInfo['database'][$dbName]['username']);
         $this->config[$dbName]->setDbPass($dbInfo['database'][$dbName]['password']);
-
-        $this->oService[$dbName] = new PhpOrient($this->config[$dbName]->getHost(), $this->config[$dbName]->getPort(), $this->config[$dbName]->getToken());
+        /**
+         * Protocol can be either of the following two values:
+         * - binary
+         * - rest
+         */
+        $this->config[$dbName]->setProtocol($dbInfo['database'][$dbName]['protocol']);
+        switch($dbInfo['database'][$dbName]['protocol']){
+            case 'binary':
+                $this->oService[$dbName] = new PhpOrient($this->config[$dbName]->getHost(), $this->config[$dbName]->getPort(), $this->config[$dbName]->getToken());
+                break;
+            case 'rest':
+                $this->oService[$dbName] = new OrientRest(
+                    $this->config[$dbName]->getHost(),
+                    $this->config[$dbName]->getPort(),
+                    $dbName,
+                    ['username' => $this->config[$dbName]->getDbUser(), 'password' => $this->config[$dbName]->getDbPass()],
+                    $this->isSecure ?? false
+                );
+                break;
+        }
         $this->oService[$dbName]->connect($this->config[$dbName]->getDbUser(), $this->config[$dbName]->getDbPass());
         $this->oService[$dbName]->dbOpen($dbName, $this->config[$dbName]->getDbUser(), $this->config[$dbName]->getDbPass());
         return $this->setConnection($dbName);
@@ -105,36 +124,49 @@ class ClassManager
      */
     public function getMetadata($entityClass)
     {
-        $entityClass = $entityClass instanceof BaseClass ? get_class($entityClass) : $entityClass;
+        //$entityClass = (!class_exists($entityClass, false)) ? get_class($entityClass) : $entityClass;
         return $this->cMetadataFactory->getMetadata($this,$entityClass);
 
     }
-    public function convertRecordToOdmObject(Record $record,$bundle)
+    public function convertRecordToOdmObject($record,$bundle)
     {
-        $class = $this->getEntityPath($bundle).$record->getOClass();
+        if(is_array($record) && array_key_exists('@class',$record))
+        {
+            $record = $this->dataManipulator->objectToRecord($record);
+        }
+        $oClass = $record->getOClass();
+        $oData = $record->getOData();;
+        $class = $this->getEntityPath($bundle).$oClass;
         if (!class_exists($class)) return $record->getOData();
         $entityClass =  new $class;
         $metadata = $this->getMetadata($entityClass);
-        $recordData = $record->getOData();
+        $recordData = $oData;
         foreach ($metadata->getColumns()->toArray() as $propName => $annotations)
         {
+
             if(array_key_exists($propName, $recordData)) {
-                $entityClass->$propName = $recordData[$propName] instanceof Record ? $this->convertRecordToOdmObject($recordData[$propName],$bundle) : $this->arrayToObject($recordData[$propName],$bundle);
-            } else {
-                if(property_exists($entityClass,$propName))
-                    $entityClass->$propName = null;
-                else
-                    $entityClass->parameterBag->set($propName,null);
+                $value = $this->dataManipulator->checkisRecord($recordData[$propName]) ? $this->convertRecordToOdmObject($recordData[$propName],$bundle) : $this->arrayToObject($recordData[$propName],$bundle);
+                $methodName = 'set' . ucfirst( $propName );
+                if ( method_exists( $entityClass, $methodName ) ) {
+                    $entityClass->{$methodName}( $value);
+                } elseif( property_exists( $entityClass, $propName ) ) {
+                    $entityClass->{$key} = $value;
+                } else {
+                    // skip not existent configuration params
+                }
+
             }
         }
+        if(method_exists($entityClass,'setRid'))
         $entityClass->setRid($record->getRid());
         return $entityClass;
     }
+
     private function arrayToObject($arrayObject,$bundle)
     {
 
         if(is_array($arrayObject))
-            foreach ($arrayObject as &$value) $value = $value instanceof Record ? $this->convertRecordToOdmObject($value,$bundle) : (is_array($value) ? $this->arrayToObject($value,$bundle): $value);
+            foreach ($arrayObject as &$value) $value = $this->dataManipulator->checkisRecord($arrayObject) ? $this->convertRecordToOdmObject($value,$bundle) : (is_array($value) ? $this->arrayToObject($value,$bundle): $value);
 
         return $arrayObject;
     }
@@ -142,4 +174,5 @@ class ClassManager
     {
         return $this->dataManipulator;
     }
+
 }
