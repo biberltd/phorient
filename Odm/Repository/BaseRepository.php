@@ -36,6 +36,8 @@ abstract class BaseRepository implements RepositoryInterface
     private $cm;
     private $entityClass;
     private $bundle;
+    private $response;
+    private $raw;
     /**
      * @var Metadata $metadata;
      */
@@ -45,6 +47,7 @@ abstract class BaseRepository implements RepositoryInterface
     {
         $this->cm = $cm;
         $this->oService = $cm->getConnection($cm->currentDb);
+        $this->response = new RepositoryResponse();
     }
 
     public function setEntityClass(BaseClass $entity)
@@ -102,8 +105,8 @@ abstract class BaseRepository implements RepositoryInterface
             }
         }
 
-
-        return new RepositoryResponse($resultSet);
+        $this->setResult($resultSet);
+        return $this;
     }
 
     /**
@@ -128,7 +131,8 @@ abstract class BaseRepository implements RepositoryInterface
             }
         }
 
-        return new RepositoryResponse($resultSet);
+        $this->setResult($resultSet);
+        return $this;
     }
 
     /**
@@ -150,7 +154,8 @@ abstract class BaseRepository implements RepositoryInterface
     {
 
         $result = $this->oService->command($query);
-        return $result;
+        $this->setResult($result);
+        return $this;
     }
     public function queryAsync($query, $limit = null, $fetchPlan = '*:0', $limitless = false)
     {
@@ -163,9 +168,8 @@ abstract class BaseRepository implements RepositoryInterface
         $options = $limitless ? $options : array_merge($options, ['limit'=>$limit]);
 
         $resultSet = $this->oService->queryAsync($query, $options);
-        foreach($resultSet as &$row) $row = $this->cm->convertRecordToOdmObject($row,$this->getBundle());
-
-        return new RepositoryResponse($resultSet);
+        $this->setResult($resultSet);
+        return $this;
     }
 
     public function setFetchPlan($fetchString = '*:0')
@@ -192,7 +196,8 @@ abstract class BaseRepository implements RepositoryInterface
             }
         }
 
-        return new RepositoryResponse($resultSet);
+        $this->setResult($resultSet);
+        return $this;
     }
 
     /**
@@ -529,7 +534,8 @@ abstract class BaseRepository implements RepositoryInterface
             throw new UniqueRecordExpected($class, $rid, 'ORecordId');
         }
         if(count($response->result) <= 0) {
-            return new RepositoryResponse(false, 404);
+            $this->setResult(null);
+            return $this;
         }
         if($class != null) {
             $collection = [];
@@ -539,9 +545,11 @@ abstract class BaseRepository implements RepositoryInterface
                 $collection[] = new $linkedObj($this->getClassManager(), $item);
             }
 
-            return new RepositoryResponse($collection[0]);
+            $this->setResult($collection[0]);
+            return $this;
         } else {
-            return new RepositoryResponse($response->result[0]);
+            $this->setResult($response->result[0]);
+            return $this;
         }
 
     }
@@ -580,14 +588,16 @@ abstract class BaseRepository implements RepositoryInterface
         $q = 'SELECT FROM ' . $this->class . ' WHERE @rid IN [' . $ridStr . ']';
         $response = $this->query($q, 1);
         if(count($response->result) <= 0) {
-            return new RepositoryResponse([]);
+            $this->setResult([]);
+            return $this;
         }
         $collection = [];
         foreach($response->result as $item) {
             $collection[] = new $class($this->controller, $item);
         }
 
-        return new RepositoryResponse($collection);
+        $this->setResult($collection);
+        return $this;
     }
 
     public function setClass($class)
@@ -598,5 +608,34 @@ abstract class BaseRepository implements RepositoryInterface
     public function getClassManager()
     {
         return $this->cm;
+    }
+
+    public function getCount()
+    {
+        return is_array($this->getResult()) ? count($this->getResult()) : 0;
+    }
+
+    public function getSingularResult()
+    {
+        return $this->getCount() >0 ? $this->getResult()[0] : null;
+    }
+
+    public function getResult()
+    {
+        return  $this->response->getResult();
+    }
+    /**
+     * @param $result
+     */
+    public function setResult($result){
+        $this->response->raw = $result;
+        foreach($result as &$row) $row = $this->cm->getDataManipulator()->convertRecordToOdmObject($row,$this->getBundle());
+        $this->response->setResult($result);
+
+    }
+
+    public function toJson()
+    {
+        $this->response->toJson();
     }
 }

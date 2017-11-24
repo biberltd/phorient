@@ -38,13 +38,13 @@ class BaseClass
      * @JMS\Accessor(getter="getStringId")
      * @JMS\Exclude(if="object.isNotRecordObject()")
      */
-    public $rid = null;
+    private $rid = null;
 
     /**
      * @var bool
      * @JMS\Exclude()
      */
-    protected $modified = false;
+    private $modified = false;
 
     /**
      * @var string $version md5 Hash of object serialization
@@ -66,12 +66,6 @@ class BaseClass
     private $updatedProps = [];
 
     /**
-     * @var ArrayCollection
-     * @JMS\Exclude(if="object.parameterBag==null")
-     */
-    public $parameterBag;
-
-    /**
      * @JMS\Exclude()
      */
     public $dtFormat;
@@ -79,7 +73,11 @@ class BaseClass
      * @var string
      * @JMS\Exclude()
      */
-    protected $typePath = 'BiberLtd\\Bundle\\Phorient\\Odm\\Types\\';
+    private $typePath = 'BiberLtd\\Bundle\\Phorient\\Odm\\Types\\';
+
+    protected $version = 0;
+
+    private  $type='d';
 
     /**
      * BaseClass constructor.
@@ -87,7 +85,7 @@ class BaseClass
      */
     public function __construct($timezone = 'Europe/Istanbul')
     {
-        $this->parameterBag = new ArrayCollection();
+        $this->dtFormat = 'Y.m.d H:i:s';
     }
 
     public function isNotRecordObject()
