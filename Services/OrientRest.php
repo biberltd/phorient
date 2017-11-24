@@ -130,7 +130,7 @@ class OrientRest
      * @param string $fetchPlan
      * @return mixed|\Psr\Http\Message\ResponseInterface
      */
-    public function query(string $query, array $params = [], int $limit = -1, string $fetchPlan="*:0")
+    public function query(string $query, array $params = [], int $limit = -1, string $fetchPlan = "*:0")
     {
         foreach ($params as $key => $value){
             if(substr($key, 0, 1) != ':' || !is_string($value)){

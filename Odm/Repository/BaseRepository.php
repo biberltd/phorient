@@ -23,6 +23,7 @@ use BiberLtd\Bundle\Phorient\Odm\Types\BaseType;
 use BiberLtd\Bundle\Phorient\Odm\Types\ORecordId;
 use BiberLtd\Bundle\Phorient\Services\ClassManager;
 use BiberLtd\Bundle\Phorient\Services\Metadata;
+use BiberLtd\Bundle\Phorient\Services\OrientRest;
 use BiberLtd\Bundle\Phorient\Services\PhpOrient;
 use PhpOrient\Protocols\Binary\Data\ID;
 use PhpOrient\Protocols\Binary\Data\Record;
@@ -43,6 +44,10 @@ abstract class BaseRepository implements RepositoryInterface
      */
     private $metadata;
 
+    /**
+     * BaseRepository constructor.
+     * @param ClassManager $cm
+     */
     public function __construct(ClassManager $cm)
     {
         $this->cm = $cm;
@@ -50,11 +55,17 @@ abstract class BaseRepository implements RepositoryInterface
         $this->response = new RepositoryResponse();
     }
 
+    /**
+     * @param BaseClass $entity
+     */
     public function setEntityClass(BaseClass $entity)
     {
         $this->entityClass = $entity;
     }
 
+    /**
+     * @param Metadata $metadata
+     */
     public function setMetadata(Metadata $metadata)
     {
         $this->metadata = $metadata;
@@ -149,12 +160,31 @@ abstract class BaseRepository implements RepositoryInterface
         return $this->setResult($resultSet);
     }
 
-    public function command($query)
+    /**
+     * @param string $query
+     * @param array $params
+     * @param int $limit
+     * @param string $fetchplan
+     * @return mixed
+     */
+    public function command(string $query, array $params = [], int $limit = 20, string $fetchplan = '*:0')
     {
-
-        $result = $this->oService->command($query);
+        if($this->oService instanceof OrientRest){
+            $resultSet = $this->oService->queryAsync($query, $params, $limit, $fetchplan);
+        }
+        else{
+            $result = $this->oService->command($query);
+        }
         return $result;
     }
+
+    /**
+     * @param $query
+     * @param null $limit
+     * @param string $fetchPlan
+     * @param bool $limitless
+     * @return mixed|\Psr\Http\Message\ResponseInterface
+     */
     public function queryAsync($query, $limit = null, $fetchPlan = '*:0', $limitless = false)
     {
         $return = new Record();
@@ -162,13 +192,24 @@ abstract class BaseRepository implements RepositoryInterface
             $return = $record;
         };
         $limit = $limit ?? -1;
-        $options = ['fetch_plan' => $fetchPlan, '_callback' => $myFunction ];
+        $options = ['fetch_plan' => $fetchPlan, '_callback' => $myFunction];
         $options = $limitless ? $options : array_merge($options, ['limit'=>$limit]);
 
-        $resultSet = $this->oService->queryAsync($query, $options);
+        if($this->oService instanceof OrientRest){
+            if($fetchPlan != '*:0'){
+               // echo $fetchPlan;exit;
+            }
+            $resultSet = $this->oService->queryAsync($query, $options, $limit, $fetchPlan);
+        }
+        else{
+            $resultSet = $this->oService->queryAsync($query, $options);
+        }
         return $resultSet;
     }
 
+    /**
+     * @param string $fetchString
+     */
     public function setFetchPlan($fetchString = '*:0')
     {
         $this->fetchPlan = $fetchString;
