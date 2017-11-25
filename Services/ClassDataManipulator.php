@@ -226,7 +226,7 @@ class ClassDataManipulator
 
             if(array_key_exists($propName, $recordData)) {
                 $value = $this->checkisRecord($recordData[$propName]) ? $this->convertRecordToOdmObject($recordData[$propName],$bundle) : $this->arrayToObject($recordData[$propName],$bundle);
-                if($annotations->type=="ODateTime")
+                if(property_exists($annotations,'type') && $annotations->type=="ODateTime")
                 {
                     $value = \DateTime::createFromFormat('Y-m-d H:i:s',$value);
                 }
