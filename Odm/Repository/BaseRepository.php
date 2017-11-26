@@ -170,7 +170,7 @@ abstract class BaseRepository implements RepositoryInterface
     public function command(string $query, array $params = [], int $limit = 20, string $fetchplan = '*:0')
     {
         if($this->oService instanceof OrientRest){
-            $resultSet = $this->oService->queryAsync($query, $params, $limit, $fetchplan);
+            $result = $this->oService->queryAsync($query, $params, $limit, $fetchplan);
         }
         else{
             $result = $this->oService->command($query);
