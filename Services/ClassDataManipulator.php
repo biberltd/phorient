@@ -10,6 +10,8 @@ namespace BiberLtd\Bundle\Phorient\Services;
 use BiberLtd\Bundle\Phorient\Odm\Entity\BaseClass;
 use BiberLtd\Bundle\Phorient\Odm\Types\BaseType;
 use BiberLtd\Bundle\Phorient\Odm\Types\ORecordId;
+use Doctrine\DBAL\Schema\Column;
+use PhpOrient\Protocols\Binary\Data\ID;
 use PhpOrient\Protocols\Binary\Data\Record;
 
 class ClassDataManipulator
@@ -245,7 +247,6 @@ class ClassDataManipulator
             $entityClass->setRid($record->getRid());
         return $entityClass;
     }
-
     private function arrayToObject($arrayObject,$bundle)
     {
 
@@ -253,5 +254,135 @@ class ClassDataManipulator
             foreach ($arrayObject as &$value) $value = $this->checkisRecord($value) ? $this->convertRecordToOdmObject($value,$bundle) : (is_array($value) ? $this->arrayToObject($value,$bundle): $value);
 
         return $arrayObject;
+    }
+
+    public function odmToClass($record,$toClass=true)
+    {
+        if(!is_object($record) && !is_array($record)){
+            $obj = $record;
+            return $obj;
+        }
+
+        if ($this->checkisRecord($record)) {
+            if (is_array($record)) {
+                $oClass = $record['@class'];
+
+                unset($record['@class']);
+                unset($record['@type']);
+                $record['rid'] = array_key_exists('@rid',$record) ? $record['@rid'] : null;
+                unset($record['@rid']);
+                unset($record['@version']);
+                unset($record['@fieldTypes']);
+            }elseif ($record instanceof Record)
+            {
+                $oClass = $record->getOClass();
+                $record = $record->getOData();
+                $record['rid'] = $record->getRid();
+            }else{
+                $oClass = null;
+            }
+            $obj = $this->dataToClass($record,$oClass,$toClass);
+        }else{
+            $obj = [];
+            foreach ($record as $key => $value) {
+
+                if (!empty($value))
+                {
+                    $obj[$key] = $this->odmToClass($value,$toClass);
+                }
+                else
+                {
+                    $obj[$key] = $value;
+                }
+            }
+        }
+
+        return $obj;
+    }
+    private function dataToClass($recordData, $oClass,$toClass=true)
+    {
+        if(!$toClass)
+        {
+            foreach($recordData as $key => &$value)
+            {
+                $value = $this->odmToClass($recordData[$key],$toClass);
+            }
+            return $recordData;
+        }
+        $class = $this->cm->getEntityPath().$oClass;
+        if (!class_exists($class)) return $recordData;
+        $entityClass =  new $class;
+        $metadata = $this->cm->getMetadata($entityClass);
+        foreach ($metadata->getColumns()->toArray() as $propName => $annotations)
+        {
+
+            if(array_key_exists($propName, $recordData)) {
+                $fieldValue = $this->odmToClass($recordData[$propName],$toClass);
+                if(property_exists($annotations,'type') && $annotations->type=="ODateTime")
+                {
+                    $fieldValue = \DateTime::createFromFormat('Y-m-d H:i:s',$recordData[$propName]);
+                }
+                $methodName = 'set' . ucfirst( $propName );
+                if ( method_exists( $entityClass, $methodName ) ) {
+                    $entityClass->{$methodName}( $fieldValue);
+                } elseif( property_exists( $entityClass, $propName ) ) {
+                    $entityClass->{$key} = $fieldValue;
+                } else {
+                    // skip not existent configuration params
+                }
+
+            }
+        }
+        if(method_exists($entityClass,'setRid'))
+            $entityClass->setRid(new ID($recordData['rid']));
+
+        return $entityClass;
+    }
+
+
+    public function objToArray($obj, &$arr){
+
+        if(!is_object($obj) && !is_array($obj)){
+            $arr = $obj;
+            return $arr;
+        }
+
+        if(is_object($obj))
+        {
+            $class = get_class($obj);
+            /**
+             * @var Metadata $metadata;
+             */
+            $metadata = $this->cm->getMetadata($class);
+            $columns = $metadata->getColumns();
+            $probs = $metadata->getProps();
+            foreach ($columns as $key => $value)
+            {
+                $arr[$key] = array();
+
+                $this->objToArray(
+                    method_exists($obj,'get'.ucfirst($key)) ?
+                    $obj->{'get'.ucfirst($key)}() :
+                    (
+                        property_exists($obj,$key) && $value instanceof Column ?
+                            $obj->$key :
+                            null
+                    )
+                , $arr[$key]);
+            }
+        }
+        foreach ($obj as $key => $value)
+        {
+            if (!empty($value))
+            {
+                $arr[$key] = array();
+                $this->objToArray($value, $arr[$key]);
+            }
+            else
+            {
+                $arr[$key] = $value;
+            }
+        }
+        return $arr;
     }
 }

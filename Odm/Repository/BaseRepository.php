@@ -662,14 +662,17 @@ abstract class BaseRepository implements RepositoryInterface
     {
         return  $this->response->getResult();
     }
+
     /**
      * @param $result
+     * @return RepositoryResponse
      */
     public function setResult($result){
         $response = new RepositoryResponse();
         $response->raw = $result;
-        foreach($result as &$row) $row = $this->cm->getDataManipulator()->convertRecordToOdmObject($row,$this->getBundle());
-        $response->setResult($result);
+        $data=$this->cm->getDataManipulator()->odmToClass($result);
+        $response->setResult($data);
+        $response->raw =$this->cm->getDataManipulator()->odmToClass($result,false);
 
         return $response;
     }

@@ -72,13 +72,15 @@ class RepositoryResponse{
         return $this->getCount() >0 ? $this->result[0] : null;
     }
 
+    public function getScalarResult()
+    {
+        return $this->raw;
+    }
+
     public function getResult()
     {
         return $this->result;
     }
-	/**
-	 * @param $result
-	 */
 	public function setResult($result){
 		$this->result = $result;
 		return $this;

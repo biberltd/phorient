@@ -31,6 +31,7 @@ class ClassManager
     public $currentDb;
     private $entityPath;
     private $dataManipulator;
+    private $currentBundle;
 
     public function __construct(ContainerInterface $container =  null, CMConfig $config=null)
     {
@@ -109,12 +110,13 @@ class ClassManager
 
     public function setEntityPath($bundleName,$path)
     {
+        $this->currentBundle = $bundleName;
         $this->entityPath[$bundleName]=$path;
     }
 
     public function getEntityPath($bundleName=null)
     {
-        if(is_null($bundleName)) $bundleName = $this->container->getRequest()->attributes->get('_template')->get('bundle');
+        $bundleName= $bundleName ?? $this->currentBundle;
         return $this->entityPath[$bundleName];
     }
 
@@ -127,48 +129,6 @@ class ClassManager
         //$entityClass = (!class_exists($entityClass, false)) ? get_class($entityClass) : $entityClass;
         return $this->cMetadataFactory->getMetadata($this,$entityClass);
 
-    }
-    public function convertRecordToOdmObject($record,$bundle)
-    {
-        if(is_array($record) && array_key_exists('@class',$record))
-        {
-            $record = $this->dataManipulator->objectToRecord($record);
-        }
-        $oClass = $record->getOClass();
-        $oData = $record->getOData();;
-        $class = $this->getEntityPath($bundle).$oClass;
-        if (!class_exists($class)) return $record->getOData();
-        $entityClass =  new $class;
-        $metadata = $this->getMetadata($entityClass);
-        $recordData = $oData;
-        foreach ($metadata->getColumns()->toArray() as $propName => $annotations)
-        {
-
-            if(array_key_exists($propName, $recordData)) {
-                $value = $this->dataManipulator->checkisRecord($recordData[$propName]) ? $this->convertRecordToOdmObject($recordData[$propName],$bundle) : $this->arrayToObject($recordData[$propName],$bundle);
-                $methodName = 'set' . ucfirst( $propName );
-                if ( method_exists( $entityClass, $methodName ) ) {
-                    $entityClass->{$methodName}( $value);
-                } elseif( property_exists( $entityClass, $propName ) ) {
-                    $entityClass->{$key} = $value;
-                } else {
-                    // skip not existent configuration params
-                }
-
-            }
-        }
-        if(method_exists($entityClass,'setRid'))
-        $entityClass->setRid($record->getRid());
-        return $entityClass;
-    }
-
-    private function arrayToObject($arrayObject,$bundle)
-    {
-
-        if(is_array($arrayObject))
-            foreach ($arrayObject as &$value) $value = $this->dataManipulator->checkisRecord($arrayObject) ? $this->convertRecordToOdmObject($value,$bundle) : (is_array($value) ? $this->arrayToObject($value,$bundle): $value);
-
-        return $arrayObject;
     }
     public function getDataManipulator()
     {
