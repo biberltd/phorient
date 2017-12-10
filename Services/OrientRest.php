@@ -185,7 +185,7 @@ class OrientRest
         $options = $this->defaultOpts;
         $body = new \stdClass();
         $body->commmand = $query;
-        $body->params = (object) $params;
+        $body->params = count($params) == 0 ? null : (object) $params;
         $options['body'] = json_encode($body);
         try{
             $response = $this->client->request(
