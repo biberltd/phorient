@@ -78,6 +78,7 @@ class ClassMetadataFactory
                 continue;
             }
             foreach($propAnnotations as $propAnnotation) {
+                if($propAnnotation instanceof Column)
                 $metadata->setColumn($propName,$propAnnotation);
             }
         }

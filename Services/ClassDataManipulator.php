@@ -113,6 +113,9 @@ class ClassDataManipulator
     }
     public function toJson($object)
     {
+        if ($object instanceof \DateTime) {
+            return $object->format('Y-m-d H:i:s');
+        }
         $data = (array) $object;
         if(count($data)==0)
         {
