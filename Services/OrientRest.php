@@ -171,16 +171,15 @@ class OrientRest
     {
         return $this->query($query, $params, $limit, $fetchPlan);
     }
+
     /**
      * @param string $query
      * @param array $params
-     * @param int $limit
-     * @param string $fetchplan
-     * @return mixed|\Psr\Http\Message\ResponseInterface
+     * @return array|null
      */
-    public function command(string $query, array $params = [], int $limit = 20, string $fetchplan = '*:0')
+    public function command(string $query, array $params = [])
     {
-        $endPoint = '/command/'.$this->database.'/'.$this->language.'/'.$limit.'/'.$fetchplan;
+        $endPoint = '/command/'.$this->database.'/'.$this->language;
         start:
         $options = $this->defaultOpts;
         $body = new \stdClass();
