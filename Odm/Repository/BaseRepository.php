@@ -170,7 +170,7 @@ abstract class BaseRepository implements RepositoryInterface
     public function command(string $query, array $params = [], int $limit = 20, string $fetchplan = '*:0')
     {
         if($this->oService instanceof OrientRest){
-            $result = $this->oService->queryAsync($query, $params, $limit, $fetchplan);
+            $result = $this->oService->command($query, $params);
         }
         else{
             $result = $this->oService->command($query);
@@ -217,8 +217,7 @@ abstract class BaseRepository implements RepositoryInterface
 
     /**
      * @param array $collection
-     *
-     * @return array
+     * @return $this
      */
     public function delete(array $collection)
     {
