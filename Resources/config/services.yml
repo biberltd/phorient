@@ -8,3 +8,6 @@ services:
     biberltd.class_manager:
         class:        BiberLtd\Bundle\Phorient\Services\ClassManager
         arguments:    ["@service_container", "@biberltd.class_manager_config"]
+    biberltd.file_factory:
+        class:        BiberLtd\Bundle\Phorient\Services\FileFactory
+        arguments:    ["%kernel.cache_dir%"]

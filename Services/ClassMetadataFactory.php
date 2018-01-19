@@ -25,12 +25,16 @@ class ClassMetadataFactory
      */
     public function getMetadata(ClassManager $classManager, $entityClass)
     {
-        $metaHash = md5(is_string($entityClass) ? $entityClass : get_class($entityClass)) . spl_object_hash($classManager);
+        $metaHash = md5(is_string($entityClass) ? $entityClass : get_class($entityClass)) ;
 
         if (isset($this->metadataList[$metaHash])) {
             return $this->metadataList[$metaHash];
         }
 
+        if($file = $classManager->fileFactory->getFile($metaHash))
+        {
+            return $this->metadataList[$metaHash] = $file;
+        }
         return $this->metadataList[$metaHash] = $this->createMetadata($classManager, $entityClass);
     }
 
@@ -41,11 +45,12 @@ class ClassMetadataFactory
      */
     private function createMetadata(ClassManager $classManager, $entityClass)
     {
-
+        $metaHash = md5(is_string($entityClass) ? $entityClass : get_class($entityClass));
         $metadata = new Metadata();
         $metadata = $this->prepareProps($entityClass, $metadata);
         $metadata = $this->preparePropAnnotations($entityClass, $metadata);
-        return $metadata;
+        $file = $classManager->fileFactory->createFile($metaHash,$metadata);
+        return $file;
 
     }
 

@@ -32,6 +32,7 @@ class ClassManager
     private $entityPath;
     private $dataManipulator;
     private $currentBundle;
+    public $fileFactory;
 
     public function __construct(ContainerInterface $container =  null, CMConfig $config=null)
     {
@@ -41,6 +42,7 @@ class ClassManager
         $this->cMetadataFactory = new ClassMetadataFactory();
         $this->annotationReader = new AnnotationReader();
         $this->dataManipulator = new ClassDataManipulator($this);
+        $this->fileFactory = new FileFactory($this->container->getParameter('kernel.cache_dir'));
 
     }
 
@@ -133,6 +135,23 @@ class ClassManager
     public function getDataManipulator()
     {
         return $this->dataManipulator;
+    }
+    public function persist($entityClass)
+    {
+        $object = $this->getDataManipulator()->objectToRecordArray($entityClass);
+
+        $nameOfArray = explode('\\', get_class($entityClass));
+        $className = end($nameOfArray);
+
+        if(!is_null($entityClass->getRid()))
+        {
+            $sql = "UPDATE ".$entityClass->getRid()." MERGE " . json_encode($object);
+        }else{
+            $sql = "INSERT INTO ".$className." CONTENT " . json_encode($object);
+        }
+
+        $result = $this->oService[$this->currentDb]->command($sql);
+
     }
 
 }

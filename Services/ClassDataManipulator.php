@@ -373,6 +373,11 @@ class ClassDataManipulator
                     )
                 , $arr[$key]);
             }
+
+            $arr['@type'] = 'd';
+            $arr['@version'] = 0;
+            $classname = explode('\\',$class);
+            $arr['@class'] = end($classname);
         }
         foreach ($obj as $key => $value)
         {
@@ -386,6 +391,61 @@ class ClassDataManipulator
                 $arr[$key] = $value;
             }
         }
+
+
         return $arr;
+    }
+
+    public function arrayToRecordArray($array)
+    {
+        $data=[];
+        if(!is_array($array) && !is_object($array)) return $this->variableToArray($array);
+        foreach ($array as $propName => $value)
+        {
+            $data[$propName] = $this->variableToArray($value);
+        }
+        return $data;
+    }
+    public function variableToArray($variable)
+    {
+        if(is_string($variable) || is_int($variable) || is_bool($variable) || is_float($variable) || is_null($variable))
+            return $variable;
+        if(is_object($variable))
+        {
+            if($variable instanceof \DateTime)
+                return $variable->format("Y-m-d H:i:s");
+            if(property_exists($variable,"rid"))
+                return $this->objectToRecordArray($variable);
+            else
+                return $this->arrayToRecordArray((array)$variable);
+        }
+        if(is_array($variable))
+            return $this->arrayToRecordArray($variable);
+
+        return $variable;
+    }
+    public function objectToRecordArray($object)
+    {
+
+        $metadata = $this->cm->getMetadata($object);
+        $data=[];
+        foreach ($metadata->getColumns()->toArray() as $propName => $annotations)
+        {
+            $value = $object->{"get".ucfirst($propName)}();
+
+            if(array_key_exists("readOnly",$annotations->options) && $annotations->options["readOnly"]) continue;
+
+            if($annotations->type=="OEmbedded")
+            {
+                $returndata=[];
+                $returndata =is_null($value) ? null:$this->objToArray($value,$returndata);
+            }else{
+                $returndata = is_object($value) || is_array($value) ? $this->arrayToRecordArray($value) : $this->variableToArray($value);
+            }
+
+            $data[$propName] = $returndata;
+
+        }
+        return $data;
     }
 }

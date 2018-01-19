@@ -21,7 +21,8 @@ class ClassRepositoryFactory
      */
     public function getRepository(ClassManager $classManager, $entityName)
     {
-        $repositoryHash = $entityName . spl_object_hash($classManager);
+
+        $repositoryHash = md5($entityName);
 
         if (isset($this->repositoryList[$repositoryHash])) {
             return $this->repositoryList[$repositoryHash];
