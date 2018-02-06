@@ -152,6 +152,7 @@ class ClassManager
 
         $result = $this->oService[$this->currentDb]->command($sql);
 
+        return $result;
     }
 
 }
