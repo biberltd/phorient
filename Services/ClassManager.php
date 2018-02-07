@@ -149,7 +149,6 @@ class ClassManager
         }else{
             $sql = "INSERT INTO ".$className." CONTENT " . json_encode($object);
         }
-
         $result = $this->oService[$this->currentDb]->command($sql);
 
         return $result;

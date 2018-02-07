@@ -342,91 +342,20 @@ class ClassDataManipulator
         return $entityClass;
     }
 
-
-    public function objToArray($obj, &$arr){
-
-        if(!is_object($obj) && !is_array($obj)){
-            $arr = $obj;
-            return $arr;
-        }
-
-        if(is_object($obj))
-        {
-            $class = get_class($obj);
-            /**
-             * @var Metadata $metadata;
-             */
-            $metadata = $this->cm->getMetadata($class);
-            $columns = $metadata->getColumns();
-            $probs = $metadata->getProps();
-            foreach ($columns as $key => $value)
-            {
-                $arr[$key] = array();
-
-                $this->objToArray(
-                    method_exists($obj,'get'.ucfirst($key)) ?
-                    $obj->{'get'.ucfirst($key)}() :
-                    (
-                        property_exists($obj,$key) && $value instanceof Column ?
-                            $obj->$key :
-                            null
-                    )
-                , $arr[$key]);
-            }
-
-            $arr['@type'] = 'd';
-            $arr['@version'] = 0;
-            $classname = explode('\\',$class);
-            $arr['@class'] = end($classname);
-        }
-        foreach ($obj as $key => $value)
-        {
-            if (!empty($value))
-            {
-                $arr[$key] = array();
-                $this->objToArray($value, $arr[$key]);
-            }
-            else
-            {
-                $arr[$key] = $value;
-            }
-        }
-
-
-        return $arr;
-    }
-
-    public function arrayToRecordArray($array)
-    {
-        $data=[];
-        if(!is_array($array) && !is_object($array)) return $this->variableToArray($array);
-        foreach ($array as $propName => $value)
-        {
-            $data[$propName] = $this->variableToArray($value);
-        }
-        return $data;
-    }
-    public function variableToArray($variable)
-    {
-        if(is_string($variable) || is_int($variable) || is_bool($variable) || is_float($variable) || is_null($variable))
-            return $variable;
-        if(is_object($variable))
-        {
-            if($variable instanceof \DateTime)
-                return $variable->format("Y-m-d H:i:s");
-            if(property_exists($variable,"rid"))
-                return $this->objectToRecordArray($variable);
-            else
-                return $this->arrayToRecordArray((array)$variable);
-        }
-        if(is_array($variable))
-            return $this->arrayToRecordArray($variable);
-
-        return $variable;
-    }
     public function objectToRecordArray($object)
     {
 
+        if(!is_array($object) && !is_object($object)) return $object;
+        if(is_array($object))
+        {
+            $data=[];
+            foreach ($object as $propName => $value)
+            {
+                $data[$propName] = $this->objectToRecordArray($value);
+            }
+            return $data;
+
+        }
         $metadata = $this->cm->getMetadata($object);
         $data=[];
         foreach ($metadata->getColumns()->toArray() as $propName => $annotations)
@@ -438,11 +367,11 @@ class ClassDataManipulator
             if($annotations->type=="OEmbedded")
             {
                 $returndata=[];
-                $returndata =is_null($value) ? null:$this->objToArray($value,$returndata);
+                $returndata =is_null($value) ? null:$this->objectToRecordArray($value,$returndata);
             }elseif($annotations->type=="OLink" && (array_key_exists("class",$annotations->options) && $annotations->options["class"]!=""))
             {
                 $returndata=[];
-                $returndata = is_null($value) ? null : $value->getRid("string");
+                $returndata = is_null($value) ? null : (method_exists($value,'getRid') ? $value->getRid("string") : null);
             }elseif($annotations->type=="OLinkList" && (array_key_exists("class",$annotations->options) && $annotations->options["class"]!=""))
             {
                 $returndata=[];
@@ -455,12 +384,15 @@ class ClassDataManipulator
                     }
                 }
             }else{
-                $returndata = is_object($value) || is_array($value) ? $this->arrayToRecordArray($value) : $this->variableToArray($value);
+                $returndata = $this->objectToRecordArray($value);
             }
-
             $data[$propName] = $returndata;
 
         }
+        $data['@type'] = 'd';
+        $data['@version'] = '1';
+        $classname = explode('\\', get_class($object));
+        $data['@class'] = end($classname);
         return $data;
     }
 }

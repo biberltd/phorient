@@ -666,13 +666,12 @@ abstract class BaseRepository implements RepositoryInterface
      * @return RepositoryResponse
      */
     public function setResult($result){
-        $response = new RepositoryResponse();
-        $response->raw = $result;
+        $this->response = new RepositoryResponse();
+        $this->response->raw = $result;
         $data=$this->cm->getDataManipulator()->odmToClass($result);
-        $response->setResult($data);
-        $response->raw =$this->cm->getDataManipulator()->odmToClass($result,false);
-
-        return $response;
+        $this->response->setResult($data);
+        $this->response->raw =$this->cm->getDataManipulator()->odmToClass($result,false);
+        return $this->response;
     }
 
     public function toJson()
