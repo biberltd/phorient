@@ -394,7 +394,7 @@ class ClassDataManipulator
 
         }
         $data['@type'] = 'd';
-        $data['@version'] = '1';
+        $data['@version'] = 0;
         $classname = explode('\\', get_class($object));
         $data['@class'] = end($classname);
         return $data;
