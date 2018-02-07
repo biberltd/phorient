@@ -364,7 +364,11 @@ class ClassDataManipulator
 
             if(array_key_exists("readOnly",$annotations->options) && $annotations->options["readOnly"]) continue;
 
-            if($annotations->type=="OEmbedded")
+            if(property_exists($annotations,'type') && $annotations->type=="ODateTime")
+            {
+                $returndata = \DateTime::createFromFormat('Y-m-d H:i:s',$value);
+
+            }elseif($annotations->type=="OEmbedded")
             {
                 $returndata=[];
                 $returndata =is_null($value) ? null:$this->objectToRecordArray($value,$returndata);
