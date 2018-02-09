@@ -375,7 +375,7 @@ class ClassDataManipulator
             }elseif($annotations->type=="OLink" && (array_key_exists("class",$annotations->options) && $annotations->options["class"]!=""))
             {
                 $returndata=[];
-                $returndata = is_null($value) ? null : (method_exists($value,'getRid') ? $value->getRid("string") : null);
+                $returndata = is_null($value) ? null : (method_exists($value,'getRid') ? $value->getRid("string") : $value);
             }elseif($annotations->type=="OLinkList" && (array_key_exists("class",$annotations->options) && $annotations->options["class"]!=""))
             {
                 $returndata=[];
@@ -383,8 +383,14 @@ class ClassDataManipulator
                 {
                     foreach ($value as $obj)
                     {
-                        if( !method_exists($obj,'getRid')) continue;
-                        $returndata[] = $obj->getRid("string");
+                        if(method_exists($obj,'getRid'))
+                        {
+                            $returndata[] = $obj->getRid("string");
+                        }elseif(!is_null($obj))
+                        {
+                            $returndata[] = $obj;
+                        }
+
                     }
                 }
             }else{
