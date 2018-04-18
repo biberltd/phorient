@@ -162,7 +162,7 @@ class BaseClass
             return '#' . $id->cluster . ':' . $id->position;
         }
 
-        return $this->rid->getValue();
+        return !is_null($this->rid) ? $this->rid->getValue() : null;
     }
 
     /**
