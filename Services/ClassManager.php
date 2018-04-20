@@ -140,14 +140,15 @@ class ClassManager
     {
         $object = $this->getDataManipulator()->objectToRecordArray($entityClass);
 
+        $class = $object['@class'];
+        unset($object['@class']);
+        unset($object['@type']);
+        unset($object['@version']);
         if(!is_null($entityClass->getRid()))
         {
-            unset($object['@type']);
-            unset($object['@version']);
-            unset($object['@class']);
             $sql = "UPDATE ".$entityClass->getRid()." MERGE " . json_encode($object);
         }else{
-            $sql = "INSERT INTO ".$object['@class']." CONTENT " . json_encode($object);
+            $sql = "INSERT INTO ".$class." CONTENT " . json_encode($object);
         }
         $result = $this->oService[$this->currentDb]->command($sql);
 
