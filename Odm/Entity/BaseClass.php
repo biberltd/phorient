@@ -90,6 +90,9 @@ class BaseClass
 
     public function isNotRecordObject()
     {
+        if(!isset($this->rid) || is_null($this->rid)){
+            return false;
+        }
         return $this->rid->getValue()->cluster == -1 && $this->rid->getValue()->position == -1 ? true : false;
     }
     public function getStringId()
