@@ -88,6 +88,9 @@ class BaseClass
         $this->dtFormat = 'Y.m.d H:i:s';
     }
 
+    /**
+     * @return bool
+     */
     public function isNotRecordObject()
     {
         if(!isset($this->rid) || is_null($this->rid)){
@@ -95,8 +98,15 @@ class BaseClass
         }
         return $this->rid->getValue()->cluster == -1 && $this->rid->getValue()->position == -1 ? true : false;
     }
+
+    /**
+     * @return bool|string
+     */
     public function getStringId()
     {
+        if(!isset($this->rid) || is_null($this->rid)){
+            return null;
+        }
         return '#'.$this->rid->getValue()->cluster.':'.$this->rid->getValue()->position;
     }
 
