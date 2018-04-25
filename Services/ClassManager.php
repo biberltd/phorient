@@ -136,7 +136,7 @@ class ClassManager
     {
         return $this->dataManipulator;
     }
-    public function persist($entityClass)
+    public function persist(&$entityClass)
     {
         $object = $this->getDataManipulator()->objectToRecordArray($entityClass);
 
@@ -150,8 +150,21 @@ class ClassManager
         }else{
             $sql = "INSERT INTO ".$class." CONTENT " . json_encode($object);
         }
+
         $result = $this->oService[$this->currentDb]->command($sql);
 
+
+        if (!is_null($result)) {
+            $entityClass->setRecordId(new \PhpOrient\Protocols\Binary\Data\ID($result[0]['@rid']));
+            $entityClass->setType($result[0]['@type']);
+            $entityClass->setVersion($result[0]['@version']);
+            $entityClass->setClass($result[0]['@class']);
+
+            if(property_exists($entityClass,'id') && array_key_exists('id',$result[0]))
+            {
+                $entityClass->setId($result[0]['id']);
+            }
+        }
         return $result;
     }
 

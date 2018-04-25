@@ -79,6 +79,8 @@ class BaseClass
 
     private  $type='d';
 
+    private $class;
+
     /**
      * BaseClass constructor.
      * @param string       $timezone
@@ -170,7 +172,7 @@ class BaseClass
     public function getRid($as = 'object')
     {
         if($as == 'string') {
-            if(is_null($this->rid->getValue())) return null;
+            if(is_null($this->rid)) return null;
             $id = $this->rid->getValue();
 
             return '#' . $id->cluster . ':' . $id->position;
@@ -217,6 +219,54 @@ class BaseClass
     public function setUpdatedProps($updatedProps)
     {
         $this->updatedProps = $updatedProps;
+    }
+
+    /**
+     * @return int
+     */
+    public function getVersion()
+    {
+        return $this->version;
+    }
+
+    /**
+     * @param int $version
+     */
+    public function setVersion($version)
+    {
+        $this->version = $version;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * @param string $type
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getClass()
+    {
+        return $this->class;
+    }
+
+    /**
+     * @param mixed $class
+     */
+    public function setClass($class)
+    {
+        $this->class = $class;
     }
 
 
