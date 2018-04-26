@@ -288,16 +288,18 @@ class ClassDataManipulator
         }else{
             $obj = [];
             foreach ($record as $key => $value) {
-                $fkey = str_replace('@','',$key);
-                if (array_key_exists($fkey,$record) && $fkey != $key) continue;
                 if (!empty($value))
                 {
-                    $obj[$fkey] = $this->odmToClass($value,$toClass);
+                    $obj[$key] = $this->odmToClass($value,$toClass);
                 }
                 else
                 {
-                    $obj[$fkey] = $value;
+                    $obj[$key] = $value;
                 }
+            }
+            if (array_key_exists('@rid',$record) && !array_key_exists('rid',$obj))
+            {
+                $obj['rid'] = $record['@rid'];
             }
         }
 
