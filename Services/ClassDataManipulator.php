@@ -119,7 +119,7 @@ class ClassDataManipulator
         $data = (array) $object;
         if(count($data)==0)
         {
-           return [];
+            return [];
         }
         $namespace = implode('', array_slice(explode('\\', get_class($object)),0, -1));
         $data['@class'] = implode('', array_slice(explode('\\', get_class($object)), -1));
@@ -149,7 +149,7 @@ class ClassDataManipulator
         }
 
         if(method_exists($object,'getRid'))
-        $data['rid'] = $object->getRid();
+            $data['rid'] = $object->getRid();
         if (array_key_exists('version', $data)) {
             $data['@version'] = $data['version'];
             unset($data['version']);
@@ -288,14 +288,14 @@ class ClassDataManipulator
         }else{
             $obj = [];
             foreach ($record as $key => $value) {
-
+                $fkey = str_replace('@','',$key);
                 if (!empty($value))
                 {
-                    $obj[$key] = $this->odmToClass($value,$toClass);
+                    $obj[$fkey] = $this->odmToClass($value,$toClass);
                 }
                 else
                 {
-                    $obj[$key] = $value;
+                    $obj[$fkey] = $value;
                 }
             }
         }
