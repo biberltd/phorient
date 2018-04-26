@@ -297,10 +297,6 @@ class ClassDataManipulator
                     $obj[$key] = $value;
                 }
             }
-            if (array_key_exists('@rid',$record) && !array_key_exists('rid',$obj))
-            {
-                $obj['rid'] = $record['@rid'];
-            }
         }
 
         return $obj;
