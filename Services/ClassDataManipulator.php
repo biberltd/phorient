@@ -289,6 +289,7 @@ class ClassDataManipulator
             $obj = [];
             foreach ($record as $key => $value) {
                 $fkey = str_replace('@','',$key);
+                if (array_key_exists($fkey,$record)) continue;
                 if (!empty($value))
                 {
                     $obj[$fkey] = $this->odmToClass($value,$toClass);
