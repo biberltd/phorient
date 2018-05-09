@@ -105,7 +105,6 @@ class BaseClass
     public function getStringId()
     {
         if(!isset($this->rid) || is_null($this->rid)){
-
             return null;
         }
         return '#'.$this->rid->getValue()->cluster.':'.$this->rid->getValue()->position;
