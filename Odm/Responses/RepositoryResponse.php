@@ -115,7 +115,7 @@ class RepositoryResponse{
      * @param string $ridOql
      * @return $this
      */
-    public function setRidOql(string $ridOql): string
+    public function setRidOql(string $ridOql)
     {
         $this->ridOql = $ridOql;
         return $this;
