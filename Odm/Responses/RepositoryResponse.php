@@ -38,6 +38,11 @@ class RepositoryResponse{
      * @var mixed
      */
     public $totalRecords;
+
+    /**
+     * @var string
+     */
+    public $ridOql;
 	/**
 	 * RepositoryResponse constructor.
 	 *
@@ -97,4 +102,24 @@ class RepositoryResponse{
     public function getTotalRecords(){
         return $this->totalRecords;
     }
+
+    /**
+     * @return string
+     */
+    public function getRidOql(): string
+    {
+        return $this->ridOql;
+    }
+
+    /**
+     * @param string $ridOql
+     * @return $this
+     */
+    public function setRidOql(string $ridOql)
+    {
+        $this->ridOql = $ridOql;
+        return $this;
+    }
+
+
 }
