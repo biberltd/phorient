@@ -153,13 +153,15 @@ class ClassManager
 
         $result = $this->oService[$this->currentDb]->command($sql);
 
-
         if (!is_null($result)) {
-            $entityClass->setRecordId(new \PhpOrient\Protocols\Binary\Data\ID($result[0]['@rid']));
+
             $entityClass->setType($result[0]['@type']);
             $entityClass->setVersion($result[0]['@version']);
-            $entityClass->setClass($result[0]['@class']);
-
+            if(array_key_exists('@rid',$result[0]))
+            {
+                $entityClass->setRecordId(new \PhpOrient\Protocols\Binary\Data\ID($result[0]['@rid']));
+                $entityClass->setClass($result[0]['@class']);
+            }
             if(property_exists($entityClass,'id') && array_key_exists('id',$result[0]))
             {
                 $entityClass->setId($result[0]['id']);
