@@ -371,6 +371,23 @@ class ClassDataManipulator
             {
                 $returndata=[];
                 $returndata =is_null($value) ? null:$this->objectToRecordArray($value,$returndata);
+            }elseif($annotations->type=="OEmbeddedSet" && (!array_key_exists("class",$annotations->options) && $annotations->options["class"]==""))
+            {
+                $returndata=[];
+                if(!is_null($value) && is_array($value) && count($value)>0)
+                {
+                    foreach ($value as $obj)
+                    {
+                        if(method_exists($obj,'getRid'))
+                        {
+                            $returndata[] = $obj->getRid("string");
+                        }elseif(!is_null($obj))
+                        {
+                            $returndata[] = $obj;
+                        }
+
+                    }
+                }
             }elseif($annotations->type=="OLink" && (array_key_exists("class",$annotations->options) && $annotations->options["class"]!=""))
             {
                 $returndata=[];
